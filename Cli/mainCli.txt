@@ -1,0 +1,121 @@
+/************************************
+*			CLIENT		           *    
+*************************************/
+
+#include "Includes.hpp"
+
+
+namespace ChatCedro
+{
+	void StartCli(string ip, string port, string Nickname)
+	{
+		try
+		{
+			boost::asio::io_context io_context;
+
+			tcp::resolver resolver(io_context);
+			auto endpoints = resolver.resolve(ip, port);
+			Client c(io_context, endpoints, Nickname);
+
+			std::thread t([&io_context]() { io_context.run(); });
+
+			char line[chat_message::max_body_length + 1];
+			while (std::cin.getline(line, chat_message::max_body_length + 1))
+			{				 
+				chat_message msg;
+				std::cout << "msg | who(Name or all):    ";
+			 	strcat(line, ( "|"+Nickname + "|end").c_str());
+				msg.body_length(std::strlen(line));
+				std::memcpy(msg.body(), line, msg.body_length());
+				msg.encode_header();
+				c.write(msg);
+			}
+
+			c.close();
+			t.join();
+		}
+		catch (std::exception& e)
+		{
+			std::cerr << "Exception: " << e.what() << "\n";
+		}
+	}
+}
+
+enum EField{
+	FROM=0,
+	TO,
+	MENSSAGE,
+	COMMAND 
+};
+std::string GetField(std::string s, EField e)
+{
+	string pipe = "|";
+	std::string::size_type b = 0;
+	std::vector<std::string> result;
+
+	while ((b = s.find_first_not_of(pipe, b)) != std::string::npos) {
+		auto e = s.find_first_of(pipe, b);
+		result.push_back(s.substr(b, e - b));
+		b = e;
+	}
+	return result[e];
+}
+int main(int argc, char* argv[])
+{
+	
+	//ChatCedro::StartCli(argv[1], argv[2], argv[3]);
+ 
+		string NickName = "Gelson" ;
+ 
+		string msg;
+		char line[1024 + 1];
+	 
+		std::cout << ">"  ;
+		while (getline(cin, msg))
+		{
+			if (msg[0] == ':')
+			{
+				if(msg.find("help") != string::npos )
+				{				 
+
+					const char* help = "***************************************************\n"  
+						"*           Ajuda Para usar o chat                 *\n"   
+						"*                                                  *\n" 
+						"*    Enviar pra todos na sala:  <all|menssagem >   *\n" 
+						"*    Enviar no privado:  <nome|menssagem >         *\n" 
+						"*    Listar todos da sala:  <:list >               *\n" 
+						"*    Ajuda:     <:help  >                          *\n" 
+						"*                                                  *\n"
+						"*    Exemplo:   lucas|Bom dia                      *\n" 
+						"***************************************************\b";
+						 
+					std::cout << help << std::endl;
+				}else
+
+				if (msg.find("list") != string::npos)
+				{
+					string listUsuers = "\n\nUsuarios connectados      \n";
+
+					string SendtoServer = NickName + "|to|msg|list|.";
+					//std::cout << GetField(SendtoServer, FROM)<<"   "<<GetField(SendtoServer, COMMAND) <<std::endl;
+				}
+				else
+				{
+					string listUsuers = "\n\n!!!!  COMANDO INVALIDO !!!!     \n";
+					std::cout << listUsuers << std::endl;
+				}
+				std::cout << ">";
+			
+			}
+			else
+			{
+				std::cout << ">";
+				string SendtoServer = NickName + "|" + msg + "|cmd|.";
+				
+				strcpy(line, SendtoServer.c_str());
+				std::cout << GetField(SendtoServer, FROM)+ GetField(SendtoServer, TO)+ GetField(SendtoServer, MENSSAGE) << std::endl;
+			}
+		}
+	 
+	return 0;
+};
